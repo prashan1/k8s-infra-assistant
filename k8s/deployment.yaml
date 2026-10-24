@@ -31,7 +31,7 @@ spec:
               cpu: 250m
               memory: 1Gi
             limits:
-              memory: 2Gi
+              memory: 1500Mi   # node has only 2 GB total; limit must leave room for k3s + OS
           # Slow boot (guardrails init): give it up to ~2 min before liveness takes over
           startupProbe:
             httpGet: { path: /health, port: 8080 }
