@@ -1,3 +1,4 @@
+import os
 import time
 import logfire
 from flashrank import Ranker, RerankRequest
@@ -16,7 +17,7 @@ def _get_ranker() -> Ranker:
         logfire.info("🧠 Initializing FlashRank Model (TinyBERT) locally...")
         try:
             # We use a specific cache directory to avoid permission issues in production
-            _ranker = Ranker(cache_dir="/tmp/flashrank")
+            _ranker = Ranker(cache_dir=os.getenv("FLASHRANK_CACHE_DIR", "/tmp/flashrank"))
         except Exception:
             _ranker = Ranker()
     return _ranker

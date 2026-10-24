@@ -1,0 +1,46 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-api
+  labels:
+    app: rag-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-api
+  template:
+    metadata:
+      labels:
+        app: rag-api
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: api
+          image: k8s-infra-assistant:dev
+          imagePullPolicy: IfNotPresent   # image is loaded into Minikube locally, not pulled
+          ports:
+            - containerPort: 8080
+          envFrom:
+            - secretRef:
+                name: rag-api-env          # created from .env, never committed
+          resources:
+            requests:
+              cpu: 250m
+              memory: 1Gi
+            limits:
+              memory: 2Gi
+          # Slow boot (guardrails init): give it up to ~2 min before liveness takes over
+          startupProbe:
+            httpGet: { path: /health, port: 8080 }
+            periodSeconds: 5
+            failureThreshold: 24
+          readinessProbe:
+            httpGet: { path: /health, port: 8080 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /health, port: 8080 }
+            periodSeconds: 20
+            failureThreshold: 3

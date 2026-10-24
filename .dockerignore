@@ -47,6 +47,15 @@ ui/
 notebooks/
 DOCS/
 
+# Deployment / infra files (not needed inside the image)
+Dockerfile
+.github/
+k8s/
+terraform/
+*.md
+test.ipynb
+processed_data/
+
 # OS
 .DS_Store
 Thumbs.db

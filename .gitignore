@@ -53,5 +53,12 @@ tenvv
 # Claude Code memory & session data
 .claude/
 
+# Terraform (state and var files can contain secrets)
+**/.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+crash.log
+
 # Logs
 *.log
