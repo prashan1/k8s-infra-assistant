@@ -6,6 +6,10 @@ metadata:
     app: rag-api
 spec:
   replicas: 1
+  # Node is too small to run old and new pods together (1Gi request each), so stop-then-start.
+  # On a larger node, drop this to get the default zero-downtime rolling update.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: rag-api
