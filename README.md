@@ -164,6 +164,7 @@ streamlit run evals/app.py
 | 09 | [LLM Gateway](docs/09_LLM_GATEWAY.md) | Portkey routing, fallback, and observability |
 | 10 | [Evals](docs/10_EVALS.md) | RAGAS metrics theory and token budget |
 | 11 | [Evals Pipeline](docs/11_EVALS_PIPELINE.md) | Live eval pipeline and Streamlit demo |
+| 12 | [Deployment](docs/12_DEPLOYMENT.md) | AWS + k3s + GitHub Actions: CI/CD flow and AWS resources |
 
 ---
 
