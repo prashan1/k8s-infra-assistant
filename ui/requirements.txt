@@ -1,0 +1,5 @@
+# UI container only: the chat frontend. No ML libraries; it just calls the backend over HTTP.
+streamlit==1.54.0
+requests==2.33.1
+python-dotenv==1.2.2
+logfire==4.32.1

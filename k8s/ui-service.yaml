@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rag-ui
+spec:
+  type: ClusterIP
+  selector:
+    app: rag-ui
+  ports:
+    - port: 80
+      targetPort: 8501

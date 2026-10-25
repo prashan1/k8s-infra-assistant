@@ -1,0 +1,48 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rag-ui
+  labels:
+    app: rag-ui
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rag-ui
+  template:
+    metadata:
+      labels:
+        app: rag-ui
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+      containers:
+        - name: ui
+          image: ghcr.io/prashan1/k8s-infra-assistant-ui:v1   # replaced by the pipeline with a sha tag
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+          env:
+            # In-cluster DNS: the Service name "rag-api" resolves to the backend. Never leaves the node.
+            - name: BACKEND_URL
+              value: http://rag-api
+            # Only the one key the UI needs, NOT the whole secret (least privilege).
+            - name: LOGFIRE_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: rag-api-env
+                  key: LOGFIRE_TOKEN
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              memory: 384Mi
+          readinessProbe:
+            httpGet: { path: /_stcore/health, port: 8501 }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /_stcore/health, port: 8501 }
+            periodSeconds: 20
+            failureThreshold: 3

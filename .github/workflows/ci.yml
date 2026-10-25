@@ -57,6 +57,24 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+      # ---- Second image: the Streamlit UI (own Dockerfile, own build context, own cache) ----
+      - id: meta_ui
+        uses: docker/metadata-action@v5
+        with:
+          images: ${{ env.IMAGE }}-ui
+          tags: |
+            type=sha,format=short
+
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./ui
+          push: ${{ github.event_name == 'push' }}
+          load: ${{ github.event_name != 'push' }}
+          tags: ${{ steps.meta_ui.outputs.tags }}
+          labels: ${{ steps.meta_ui.outputs.labels }}
+          cache-from: type=gha,scope=ui
+          cache-to: type=gha,mode=max,scope=ui
+
   deploy:
     needs: build
     # Only real pushes to main deploy; pull requests never touch the server
@@ -67,18 +85,6 @@ jobs:
       id-token: write
       contents: read
     steps:
-      - name: Debug OIDC claims (temporary)
-        run: |
-          TOKEN=$(curl -sH "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" \
-            "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r .value)
-          python3 - "$TOKEN" <<'EOF'
-          import sys, json, base64
-          payload = sys.argv[1].split(".")[1]
-          payload += "=" * (-len(payload) % 4)
-          claims = json.loads(base64.urlsafe_b64decode(payload))
-          print({k: claims.get(k) for k in ("iss", "aud", "sub", "repository", "ref")})
-          EOF
-          echo "Role ARN: ${{ vars.AWS_ROLE_ARN }}"
       # Exchanges GitHub's signed token for temporary AWS credentials (no stored keys)
       - uses: aws-actions/configure-aws-credentials@v4
         with:
@@ -89,10 +95,13 @@ jobs:
         env:
           INSTANCE_ID: ${{ vars.EC2_INSTANCE_ID }}
           NEW_IMAGE: ${{ env.IMAGE }}:${{ needs.build.outputs.tag }}
+          NEW_UI_IMAGE: ${{ env.IMAGE }}-ui:${{ needs.build.outputs.tag }}
         run: |
-          PARAMS=$(jq -n --arg img "$NEW_IMAGE" '{commands: [
+          PARAMS=$(jq -n --arg img "$NEW_IMAGE" --arg ui "$NEW_UI_IMAGE" '{commands: [
             "/usr/local/bin/k3s kubectl set image deployment/rag-api api=\($img)",
-            "/usr/local/bin/k3s kubectl rollout status deployment/rag-api --timeout=300s"
+            "/usr/local/bin/k3s kubectl set image deployment/rag-ui ui=\($ui)",
+            "/usr/local/bin/k3s kubectl rollout status deployment/rag-api --timeout=300s",
+            "/usr/local/bin/k3s kubectl rollout status deployment/rag-ui --timeout=120s"
           ]}')
 
           CMD_ID=$(aws ssm send-command \

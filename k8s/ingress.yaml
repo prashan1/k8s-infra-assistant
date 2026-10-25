@@ -1,10 +1,12 @@
 apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
-  name: rag-api
+  name: rag-ui
 spec:
+  # Only the UI is exposed. The backend (Service rag-api) stays internal: it has no
+  # authentication and spends LLM quota, so the public never needs to reach it directly.
   # No ingressClassName: k3s marks Traefik as the default class.
-  # No host: matches any request arriving on port 80.
+  # Streamlit uses WebSockets; Traefik upgrades those connections automatically.
   rules:
     - http:
         paths:
@@ -12,6 +14,6 @@ spec:
             pathType: Prefix
             backend:
               service:
-                name: rag-api
+                name: rag-ui
                 port:
                   number: 80
